@@ -1,5 +1,310 @@
+<!DOCTYPE html>
+<html lang="ja" class>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>じゃんけん風ゲーム</title>
+<script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* Global styles and layout settings */
+body {
+font-family: 'Inter', sans-serif;
+background-color: #f0f4f8; /* Light gray background */
+display: flex;
+justify-content: center;
+align-items: center;
+min-height: 100vh; /* Full viewport height */
+margin: 0;
+padding: 20px; /* Overall padding */
+overflow: hidden; /* Hide scrollbars */
+}
+/* Game container style */
+.game-container {
+background-color: #ffffff; /* White background */
+border-radius: 1.5rem; /* Rounded corners (tailwind: rounded-3xl) */
+box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); /* Shadow (tailwind: shadow-xl) */
+padding: 2rem; /* Adjusted inner padding (tailwind: p-8) */
+width: 100%;
+max-width: 28rem; /* Reduced max-width for compactness (tailwind: max-w-sm) */
+text-align: center;
+display: flex;
+flex-direction: column;
+gap: 1rem; /* Adjusted spacing between elements (tailwind: gap-4) */
+animation: fade-in-up 0.5s ease-out; /* Fade-in animation for the entire container */
+}
 
+/* Fade-in animation */
+@keyframes fade-in-up {
+from {
+opacity: 0;
+transform: translateY(20px);
+}
+to {
+opacity: 1;
+transform: translateY(0);
+}
+}
+
+/* Player and AI status display area styles */
+.status-display-wrapper {
+display: flex;
+justify-content: space-around; /* Distribute evenly */
+gap: 1rem; /* Spacing between status elements */
+margin-bottom: 1rem; /* Bottom margin */
+}
+
+.player-status, .ai-status {
+background-color: #e2e8f0; /* Light gray background (tailwind: bg-gray-200) */
+border-radius: 0.75rem; /* Rounded corners (tailwind: rounded-xl) */
+padding: 0.75rem 1rem; /* Adjusted inner padding (tailwind: p-3) */
+flex: 1; /* Equal width */
+display: flex;
+flex-direction: column; /* Vertical alignment */
+align-items: center; /* Center horizontally */
+font-weight: 600; /* Font weight (tailwind: font-semibold) */
+color: #2d3748; /* Dark gray text (tailwind: text-gray-800) */
+transition: all 0.3s ease; /* Hover animation */
+}
+
+.player-status:hover, .ai-status:hover {
+transform: translateY(-3px); /* Slightly lift up */
+box-shadow: 0 8px 12px -5px rgba(0, 0, 0, 0.15); /* Emphasize shadow */
+}
+
+.status-label {
+font-size: 0.9rem; /* Label font size */
+margin-bottom: 0.25rem;
+}
+
+.charge-value {
+font-size: 1.8rem; /* Charge point font size */
+font-weight: 700;
+color: #1a202c; /* Darker color */
+transition: transform 0.15s ease-out; /* Animation on change */
+}
+
+/* Animation for charge points when they change */
+.charge-value.pulse {
+animation: pulse-effect 0.3s ease-out;
+}
+
+@keyframes pulse-effect {
+0% { transform: scale(1); }
+50% { transform: scale(1.1); color: #ef4444; /* Change to red */ }
+100% { transform: scale(1); }
+}
+
+/* Action display area styles */
+.turn-display-area {
+background-color: #f7fafc;
+border-radius: 0.75rem;
+padding: 0.8rem;
+min-height: 50px; /* Ensure a minimum height */
+display: flex;
+justify-content: center;
+align-items: center;
+gap: 1rem;
+font-size: 1.1rem;
+font-weight: 600;
+color: #333;
+box-shadow: inset 0 1px 3px 0 rgba(0, 0, 0, 0.05); /* Inner shadow */
+opacity: 0; /* Initially hidden */
+transform: translateY(10px); /* Slightly move down */
+transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+.turn-display-area.visible {
+opacity: 1;
+transform: translateY(0);
+}
+
+.player-choice-icon, .ai-choice-icon {
+display: inline-block;
+width: 40px; /* Icon width */
+height: 40px; /* Icon height */
+line-height: 40px; /* Vertical centering */
+border-radius: 50%; /* Circular shape */
+background-color: #6366f1; /* Icon background color */
+color: #ffffff;
+font-weight: bold;
+font-size: 1.2rem;
+margin: 0 0.25rem;
+box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.ai-choice-icon {
+background-color: #ef4444; /* Different color for AI */
+}
+
+/* Action button container styles */
+.action-buttons {
+display: grid;
+grid-template-columns: repeat(2, 1fr); /* 2 equal columns */
+gap: 0.75rem; /* Adjusted spacing between buttons (tailwind: gap-3) */
+margin-top: 0.5rem; /* Top margin */
+}
+/* Individual action button styles */
+.action-button {
+padding: 0.9rem 1.25rem; /* Adjusted padding (tailwind: px-5 py-3.5) */
+border-radius: 0.75rem; /* Rounded corners (tailwind: rounded-xl) */
+font-size: 1.0rem; /* Adjusted font size (tailwind: text-base) */
+font-weight: 700; /* Font weight (tailwind: font-bold) */
+color: #ffffff; /* White text */
+cursor: pointer; /* Pointer cursor */
+transition: all 0.2s ease-out; /* Transition for hover/active */
+box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); /* Shadow (tailwind: shadow-md) */
+position: relative; /* Base for popup hints */
+overflow: hidden; /* Prevent gradient overflow */
+}
+/* Hover state style */
+.action-button:hover {
+transform: translateY(-3px); /* Lift up slightly */
+box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15), 0 4px 6px -4px rgba(0, 0, 0, 0.1); /* Emphasize shadow */
+}
+/* Click state style */
+.action-button:active {
+transform: translateY(0); /* Return to original position */
+box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.06); /* Smaller shadow */
+}
+/* Disabled button style */
+.action-button:disabled {
+opacity: 0.5;
+cursor: not-allowed;
+transform: none;
+box-shadow: none;
+background-image: none !important; /* Disable gradient */
+background-color: #cbd5e0 !important; /* Light gray */
+}
+
+/* Colors for each action button */
+.btn-charge {
+background-image: linear-gradient(to right, #4CAF50, #66BB6A); /* Green */
+}
+.btn-guard {
+background-image: linear-gradient(to right, #2196F3, #42A5F5); /* Blue */
+}
+.btn-reflect {
+background-image: linear-gradient(to right, #FFC107, #FFD54F); /* Amber */
+color: #333; /* Dark text */
+}
+.btn-attack {
+background-image: linear-gradient(to right, #F44336, #EF5350); /* Red */
+}
+
+/* Message display area styles */
+.message-area {
+background-color: #f7fafc; /* Light gray background (tailwind: bg-gray-100) */
+border-radius: 0.75rem; /* Rounded corners (tailwind: rounded-xl) */
+padding: 1rem; /* Inner padding (tailwind: p-4) */
+min-height: 70px; /* Minimum height */
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 1rem; /* Adjusted font size (tailwind: text-base) */
+color: #4a5568; /* Dark gray text (tailwind: text-gray-700) */
+font-weight: 500;
+text-align: center;
+white-space: pre-wrap; /* Enable line breaks */
+transition: opacity 0.3s ease-out, transform 0.3s ease-out, background-color 0.3s ease; /* Message change animation */
+opacity: 0; /* Initially hidden */
+transform: translateY(10px); /* Slightly moved down */
+}
+
+.message-area.visible {
+opacity: 1;
+transform: translateY(0);
+}
+
+/* Win/Loss/Draw emphasis styles */
+.message-area.win-message {
+background-color: #d1fae5; /* Light green for win */
+color: #065f46; /* Dark green text */
+font-weight: 700;
+font-size: 1.15rem; /* Slightly larger text */
+border: 2px solid #34d399; /* Green border */
+}
+
+.message-area.lose-message {
+background-color: #fee2e2; /* Light red for lose */
+color: #991b1b; /* Dark red text */
+font-weight: 700;
+font-size: 1.15rem;
+border: 2px solid #ef4444; /* Red border */
+}
+
+.message-area.draw-message {
+background-color: #e0f2fe; /* Light blue for draw */
+color: #1e40af; /* Dark blue text */
+font-weight: 700;
+font-size: 1.15rem;
+border: 2px solid #3b82f6; /* Blue border */
+}
+
+/* Restart button style */
+.restart-button {
+padding: 0.75rem 1.5rem; /* Padding (tailwind: py-3 px-6) */
+border-radius: 0.75rem; /* Rounded corners (tailwind: rounded-xl) */
+font-size: 1.125rem; /* Adjusted font size (tailwind: text-lg) */
+font-weight: 700; /* Font weight (tailwind: font-bold) */
+background-image: linear-gradient(to right, #8B5CF6, #A78BFA); /* Purple gradient */
+color: #ffffff; /* White text */
+cursor: pointer; /* Pointer cursor */
+transition: all 0.2s ease-out; /* Transition for hover/active */
+box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); /* Shadow (tailwind: shadow-md) */
+}
+/* Hover state style */
+.restart-button:hover {
+transform: translateY(-3px); /* Lift up slightly */
+box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15), 0 4px 6px -4px rgba(0, 0, 0, 0.1); /* Emphasize shadow */
+}
+/* Click state style */
+.restart-button:active {
+transform: translateY(0); /* Return to original position */
+box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.06); /* Smaller shadow */
+}
+/* Hidden class to hide elements */
+.hidden {
+display: none;
+}
+/* Responsive design media queries */
+@media (max-width: 640px) {
+.game-container {
+padding: 1.5rem; /* Adjusted padding for smaller screens */
+gap: 0.75rem; /* Adjusted spacing for smaller screens */
+}
+.status-display-wrapper {
+flex-direction: column; /* Stack vertically */
+gap: 0.75rem;
+}
+.player-status, .ai-status {
+padding: 0.6rem 0.8rem;
+}
+.charge-value {
+font-size: 1.5rem;
+}
+.action-button {
+padding: 0.7rem 1rem; /* Adjusted button padding for smaller screens */
+font-size: 0.9rem; /* Adjusted font size for smaller screens */
+}
+.message-area {
+font-size: 0.9rem; /* Adjusted font size for smaller screens */
+}
+.restart-button {
+font-size: 1rem; /* Adjusted font size for smaller screens */
+}
+.turn-display-area {
+font-size: 1rem;
+}
+.player-choice-icon, .ai-choice-icon {
+width: 35px;
+height: 35px;
+line-height: 35px;
+font-size: 1rem;
+}
+}
+</style>
+</head>
+<body>
 <div class="game-container">
 <h1 class="text-2xl font-bold text-gray-800 mb-2">じゃんけん風バトル</h1>
 
@@ -14,3 +319,400 @@
 <span id="aiCharge" class="charge-value">0</span>
 </div>
 </div>
+
+<!-- Turn result display area -->
+<div class="turn-display-area" id="turnDisplayArea">
+<span id="playerChoiceIcon" class="player-choice-icon hidden"></span>
+<span class="text-gray-600">vs</span>
+<span id="aiChoiceIcon" class="ai-choice-icon hidden"></span>
+</div>
+
+<!-- Game message display area -->
+<div class="message-area" id="messageArea">
+アクションを選んでください！
+</div>
+
+<!-- Player action selection buttons -->
+<div class="action-buttons" id="actionButtons">
+<button class="action-button btn-charge" data-action="charge">貯める (+1)</button>
+<button class="action-button btn-guard" data-action="guard">ガード (-1)</button>
+<button class="action-button btn-reflect" data-action="reflect">反射 (-2)</button>
+<button class="action-button btn-attack" data-action="attack">攻撃 (-3)</button>
+</div>
+
+<!-- Restart button (shown when game ends) -->
+<button class="restart-button hidden" id="restartButton">もう一度プレイ</button>
+</div>
+
+<script>
+// Variables for managing game state
+let playerCharge = 0; // Player's charge points
+let aiCharge = 0; // AI's charge points
+let playerAction = ''; // Player's chosen action
+let aiAction = ''; // AI's chosen action
+let gameOver = false; // Game over flag
+let gameHistory = []; // Game history (for AI learning/thinking)
+let turnCount = 0; // Turn counter
+
+// Define cost for each action
+const actionCosts = {
+charge: 0, // "Charge" adds to charge, not costs
+guard: 1, // Guard cost
+reflect: 2, // Reflect cost
+attack: 3 // Attack cost
+};
+
+// Get references to DOM elements
+const playerChargeDisplay = document.getElementById('playerCharge');
+const aiChargeDisplay = document.getElementById('aiCharge');
+const messageArea = document.getElementById('messageArea');
+const actionButtons = document.getElementById('actionButtons');
+const restartButton = document.getElementById('restartButton');
+const turnDisplayArea = document.getElementById('turnDisplayArea');
+const playerChoiceIcon = document.getElementById('playerChoiceIcon');
+const aiChoiceIcon = document.getElementById('aiChoiceIcon');
+
+// Map for action names and display icons
+const actionDisplayMap = {
+charge: '貯',
+guard: 'ガ',
+reflect: '反',
+attack: '攻'
+};
+
+/**
+* Function to reset the game to its initial state
+*/
+function initializeGame() {
+playerCharge = 0; // Reset player's charge
+aiCharge = 0; // Reset AI's charge
+playerAction = ''; // Reset player's action
+aiAction = ''; // Reset AI's action
+gameOver = false; // Reset game over flag
+gameHistory = []; // Reset game history
+turnCount = 0; // Reset turn count
+updateUI(true); // Update UI (no animation during initialization)
+messageArea.textContent = 'アクションを選んでください！'; // Initial message
+messageArea.classList.add('visible'); // Show message area
+messageArea.classList.remove('win-message', 'lose-message', 'draw-message'); // Remove outcome styles
+actionButtons.classList.remove('hidden'); // Show action buttons
+restartButton.classList.add('hidden'); // Hide "Play Again" button
+playerChoiceIcon.classList.add('hidden'); // Hide icons
+aiChoiceIcon.classList.add('hidden'); // Hide icons
+turnDisplayArea.classList.remove('visible'); // Hide turn display area
+// Enable all buttons
+actionButtons.querySelectorAll('.action-button').forEach(button => button.disabled = false);
+}
+
+/**
+* Function to update the display of charge points
+* @param {boolean} [initial=false] - Whether it's during initialization (for animation control)
+*/
+function updateUI(initial = false) {
+// Update player's charge points and animation
+const oldPlayerCharge = parseInt(playerChargeDisplay.textContent);
+if (oldPlayerCharge !== playerCharge && !initial) {
+playerChargeDisplay.classList.add('pulse');
+setTimeout(() => playerChargeDisplay.classList.remove('pulse'), 300);
+}
+playerChargeDisplay.textContent = playerCharge;
+
+// Update AI's charge points and animation
+const oldAiCharge = parseInt(aiChargeDisplay.textContent);
+if (oldAiCharge !== aiCharge && !initial) {
+aiChargeDisplay.classList.add('pulse');
+setTimeout(() => aiChargeDisplay.classList.remove('pulse'), 300);
+}
+aiChargeDisplay.textContent = aiCharge;
+}
+
+/**
+* Function to determine AI's action (smarter logic)
+* @param {number} currentAiCharge - Current AI's charge points
+* @param {number} currentPlayerCharge - Current player's charge points
+* @param {Array<Object>} history - Past game history
+* @returns {string} AI's chosen action ('charge', 'guard', 'reflect', 'attack')
+*/
+function getAiAction(currentAiCharge, currentPlayerCharge, history) {
+let chosenAction = 'charge'; // Default to charge
+
+// AI's action possibilities
+const canAiAttack = currentAiCharge >= actionCosts.attack;
+const canAiReflect = currentAiCharge >= actionCosts.reflect;
+const canAiGuard = currentAiCharge >= actionCosts.guard;
+
+// Player's action possibilities
+const playerCanAttack = currentPlayerCharge >= actionCosts.attack;
+const playerCanReflect = currentPlayerCharge >= actionCosts.reflect;
+const playerCanGuard = currentPlayerCharge >= actionCosts.guard;
+
+// Get player's last actual action (for AI thinking)
+const lastPlayerActualAction = history.length > 0 ? history[history.length - 1].playerActual : null;
+const lastAiActualAction = history.length > 0 ? history[history.length - 1].aiActual : null;
+
+// AI decision-making logic
+// Priority: Aim for victory > Defend against player attack > Increase charge / Exploit player's low charge > Learn from history > Random
+
+// 1. Aim for decisive victory (if AI can attack and player cannot defend)
+// If the player cannot guard or reflect, prioritize attack
+if (canAiAttack && (!playerCanGuard && !playerCanReflect && currentPlayerCharge < actionCosts.guard)) {
+if (Math.random() < 0.9) return 'attack'; // 90% chance to attack
+}
+
+// 2. Defend/reflect player's attack (if player can attack)
+if (playerCanAttack) {
+// If player is likely to attack, try to reflect or guard
+if (canAiReflect && Math.random() < 0.6) { // If AI can reflect, 60% chance to reflect
+return 'reflect';
+} else if (canAiGuard && Math.random() < 0.7) { // Even if cannot reflect, guard (70% chance to guard)
+return 'guard';
+}
+}
+
+// 3. If player's charge is low, or they just charged, AI considers attacking
+if (currentPlayerCharge < actionCosts.attack || lastPlayerActualAction === 'charge') {
+if (canAiAttack && Math.random() < 0.75) { // 75% chance to attack
+return 'attack';
+}
+}
+
+// 4. If AI's charge is low, or player just defended, AI considers charging
+if (currentAiCharge < actionCosts.attack) { // If AI's charge is less than attack cost
+if (Math.random() < 0.8) return 'charge'; // 80% chance to charge
+}
+
+// 5. Learn player's common tendencies (simplified)
+// Analyze player's actions in the last 5 turns
+const recentPlayerActions = history.slice(Math.max(0, history.length - 5)).map(h => h.playerActual);
+const chargeCount = recentPlayerActions.filter(a => a === 'charge').length;
+const attackCount = recentPlayerActions.filter(a => a === 'attack').length;
+const guardCount = recentPlayerActions.filter(a => a === 'guard').length;
+const reflectCount = recentPlayerActions.filter(a => a === 'reflect').length;
+
+
+if (chargeCount >= 3 && canAiAttack) { // If player charged 3 or more times, consider attacking
+if (Math.random() < 0.85) return 'attack'; // 85% chance to attack
+}
+if (attackCount >= 3) { // If player attacked 3 or more times, consider defending
+if (canAiReflect && Math.random() < 0.7) return 'reflect'; // Prioritize reflect
+if (canAiGuard && Math.random() < 0.9) return 'guard';
+}
+if (guardCount >= 3 && currentAiCharge < actionCosts.attack) { // If player guarded 3 or more times, AI charges
+if (Math.random() < 0.75) return 'charge';
+}
+if (reflectCount >= 3 && canAiAttack) { // If player reflected 3 or more times, AI avoids attacking and charges
+if (Math.random() < 0.6) return 'charge'; // 60% chance to charge
+}
+
+// 6. If player's charge is higher than AI's, AI prioritizes increasing charge
+if (currentPlayerCharge > currentAiCharge && currentAiCharge < actionCosts.attack) {
+if (Math.random() < 0.9) return 'charge';
+}
+
+// 7. Final fallback (if costs are not met, or no optimal action found)
+// Random element
+const randomChance = Math.random();
+if (currentAiCharge >= actionCosts.attack && randomChance < 0.3) return 'attack';
+if (currentAiCharge >= actionCosts.reflect && randomChance < 0.6) return 'reflect';
+if (currentAiCharge >= actionCosts.guard && randomChance < 0.9) return 'guard';
+
+return 'charge'; // If none of the above apply, or cost is insufficient, charge
+}
+
+/**
+* Function to process one turn of the game
+*/
+function processTurn() {
+turnCount++; // Increment turn count
+
+// Record charge points at the beginning of the turn (for AI learning)
+const initialPlayerCharge = playerCharge;
+const initialAiCharge = aiCharge;
+
+// Variables for player and AI's actual actions (adjusted if charge is insufficient)
+let actualPlayerAction = playerAction;
+let actualAiAction = aiAction;
+let currentMessage = ''; // Message for the current turn
+
+// If player's charge is insufficient, force to "charge"
+if (playerAction !== 'charge' && playerCharge < actionCosts[playerAction]) {
+actualPlayerAction = 'charge';
+}
+
+// If AI's charge is insufficient, force to "charge"
+if (aiAction !== 'charge' && aiCharge < actionCosts[aiAction]) {
+actualAiAction = 'charge';
+}
+
+// Update and display action icons
+playerChoiceIcon.textContent = actionDisplayMap[actualPlayerAction];
+aiChoiceIcon.textContent = actionDisplayMap[actualAiAction];
+playerChoiceIcon.classList.remove('hidden');
+aiChoiceIcon.classList.remove('hidden');
+turnDisplayArea.classList.add('visible'); // Show turn display area
+
+// Consume and gain charge points
+if (actualPlayerAction === 'charge') {
+playerCharge += 1; // Charge adds +1
+} else {
+playerCharge -= actionCosts[actualPlayerAction]; // Otherwise, consume cost
+}
+
+if (actualAiAction === 'charge') {
+aiCharge += 1; // Charge adds +1
+} else {
+aiCharge -= actionCosts[actualAiAction]; // Otherwise, consume cost
+}
+
+// Win/Loss determination logic
+let roundWinner = null; // Stores 'player', 'ai', 'draw', or null
+
+// Player's attack vs. AI's action combinations
+if (actualPlayerAction === 'attack') {
+if (actualAiAction === 'charge') {
+roundWinner = 'player';
+currentMessage = 'あなたの攻撃がAIに命中！'; // Only the core message
+} else if (actualAiAction === 'guard') {
+currentMessage = 'あなたの攻撃はAIにガードされた！';
+} else if (actualAiAction === 'reflect') {
+roundWinner = 'ai';
+currentMessage = 'あなたの攻撃はAIに反射された！';
+} else if (actualAiAction === 'attack') {
+roundWinner = 'draw';
+currentMessage = '両者攻撃！';
+}
+}
+// AI's attack vs. Player's action combinations
+else if (actualAiAction === 'attack') {
+if (actualPlayerAction === 'charge') {
+roundWinner = 'ai';
+currentMessage = 'AIの攻撃があなたに命中！';
+} else if (actualPlayerAction === 'guard') {
+currentMessage = 'AIの攻撃はあなたにガードされた！';
+} else if (actualPlayerAction === 'reflect') {
+roundWinner = 'player';
+currentMessage = 'AIの攻撃はあなたに反射された！';
+}
+}
+// Other action combinations (not attack)
+else {
+currentMessage = '特になにも起こらなかった。'; // Draw, game continues
+}
+
+// Bonus every 3 turns for the player with less charge
+if (turnCount % 3 === 0 && !roundWinner) { // Only if game is not over
+const bonus = Math.floor(Math.random() * 3) + 1; // Random number from 1 to 3
+let bonusRecipient = null;
+if (playerCharge < aiCharge) {
+playerCharge += bonus;
+bonusRecipient = 'あなた';
+} else if (aiCharge < playerCharge) {
+aiCharge += bonus;
+bonusRecipient = 'AI';
+}
+
+if (bonusRecipient) {
+currentMessage += `\n\nボーナス！ ${bonusRecipient}に貯めポイントが${bonus}加算されました！`;
+}
+}
+
+// Apply animation before updating message area
+messageArea.classList.remove('visible', 'win-message', 'lose-message', 'draw-message'); // Hide and remove previous styles
+setTimeout(() => {
+messageArea.textContent = currentMessage;
+// Add outcome specific classes
+if (roundWinner === 'player') {
+messageArea.textContent += ' あなたの勝ち！';
+messageArea.classList.add('win-message');
+} else if (roundWinner === 'ai') {
+messageArea.textContent += ' AIの勝ち！';
+messageArea.classList.add('lose-message');
+} else if (roundWinner === 'draw' && (actualPlayerAction === 'attack' || actualAiAction === 'attack')) {
+messageArea.textContent += ' 引き分け！';
+messageArea.classList.add('draw-message');
+} else if (currentMessage === '特になにも起こらなかった。') {
+messageArea.classList.add('draw-message'); // Use draw-message style for neutral outcome
+}
+messageArea.classList.add('visible'); // Show message with animation
+updateUI(); // Update charge points (with animation)
+}, 300); // Show new message after 300ms
+
+// Add to game history (for AI learning)
+gameHistory.push({
+turn: turnCount,
+playerChosen: playerAction, // Player's chosen action
+playerActual: actualPlayerAction, // Player's actual action (corrected if charge insufficient)
+aiChosen: aiAction, // AI's chosen action
+aiActual: actualAiAction, // AI's actual action
+playerChargeBefore: initialPlayerCharge,
+aiChargeBefore: initialAiCharge,
+outcome: roundWinner // 'player', 'ai', 'draw', null (continue)
+});
+
+// Temporarily disable action buttons
+actionButtons.querySelectorAll('.action-button').forEach(button => button.disabled = true);
+
+if (roundWinner) { // If game ends
+gameOver = true;
+setTimeout(() => {
+actionButtons.classList.add('hidden'); // Hide action buttons
+restartButton.classList.remove('hidden'); // Show "Play Again" button
+turnDisplayArea.classList.remove('visible'); // Hide turn display area
+playerChoiceIcon.classList.add('hidden');
+aiChoiceIcon.classList.add('hidden');
+}, 1200); // Wait a bit longer when game ends (1.2 seconds)
+} else { // If game continues
+setTimeout(() => {
+messageArea.classList.remove('visible', 'win-message', 'lose-message', 'draw-message'); // Hide and remove styles for next message
+turnDisplayArea.classList.remove('visible'); // Hide turn display area
+playerChoiceIcon.classList.add('hidden');
+aiChoiceIcon.classList.add('hidden');
+
+setTimeout(() => {
+messageArea.textContent = 'アクションを選んでください！'; // Reset message
+messageArea.classList.add('visible'); // Show message area
+actionButtons.querySelectorAll('.action-button').forEach(button => button.disabled = false); // Enable action buttons
+playerAction = ''; // Reset player's action
+aiAction = ''; // Reset AI's action
+}, 300); // Reset message after 300ms
+}, 800); // Normal turn progression waits shorter (0.8 seconds)
+}
+}
+
+/**
+* Helper function to convert English action names to Japanese
+* @param {string} action - English action name
+* @returns {string} Japanese action name
+*/
+function getActionName(action) {
+switch (action) {
+case 'charge': return '貯める';
+case 'guard': return 'ガード';
+case 'reflect': return '反射';
+case 'attack': return '攻撃';
+default: return ''; // Unknown action
+}
+}
+
+// Register event listeners
+// Handler for action button clicks
+actionButtons.addEventListener('click', (event) => {
+// Check if a button with class 'action-button' was clicked and game is not over
+if (event.target.closest('.action-button') && !gameOver) {
+playerAction = event.target.closest('.action-button').dataset.action; // Set player's action
+// Determine AI's action, passing current player and AI charge, and game history
+aiAction = getAiAction(aiCharge, playerCharge, gameHistory);
+processTurn(); // Start turn processing
+}
+});
+
+// Handler for "Play Again" button click
+restartButton.addEventListener('click', () => {
+initializeGame(); // Initialize and restart game
+});
+
+// Start the game when the page loads
+initializeGame();
+</script>
+</body>
+</html>
