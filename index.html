@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>じゃんけん風ゲーム</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="game-container">
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">じゃんけん風バトル</h1>
+    <div class="status-display-wrapper">
+      <div class="player-status">
+        <span class="status-label">あなたの貯め:</span>
+        <span id="playerCharge" class="charge-value">0</span>
+      </div>
+      <div class="ai-status">
+        <span class="status-label">AIの貯め:</span>
+        <span id="aiCharge" class="charge-value">0</span>
+      </div>
+    </div>
+    <div class="turn-display-area" id="turnDisplayArea">
+      <span id="playerChoiceIcon" class="player-choice-icon hidden"></span>
+      <span class="text-gray-600">vs</span>
+      <span id="aiChoiceIcon" class="ai-choice-icon hidden"></span>
+    </div>
+    <div class="message-area" id="messageArea">アクションを選んでください！</div>
+    <div class="action-buttons" id="actionButtons">
+      <button class="action-button btn-charge" data-action="charge">貯める (+1)</button>
+      <button class="action-button btn-guard" data-action="guard">ガード (-1)</button>
+      <button class="action-button btn-reflect" data-action="reflect">反射 (-2)</button>
+      <button class="action-button btn-attack" data-action="attack">攻撃 (-3)</button>
+    </div>
+    <button class="restart-button hidden" id="restartButton">もう一度プレイ</button>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
